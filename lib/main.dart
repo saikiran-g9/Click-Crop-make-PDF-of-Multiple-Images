@@ -39,28 +39,89 @@ class _MyAppState extends State<MyApp> {
               })
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: getImageFromGallery,
-      ),
-      body: _image != null
-          ? ListView.builder(
-              itemCount: _image.length,
-              itemBuilder: (context, index) => Container(
-                  
-                  width: double.infinity,
-                  margin: EdgeInsets.all(8),
-                  child: Image.file(
-                    _image[index],
-                    fit: BoxFit.cover,
-                  )),
-            )
-          : Container(),
-    );
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              FloatingActionButton(
+                backgroundColor: Colors.green,
+                heroTag: "btn",
+                onPressed: getImageFromCamera,
+                child: Icon(Icons.camera),
+              ),
+              SizedBox(
+                width: 40,
+              ),
+              FloatingActionButton(
+                backgroundColor: Colors.red,
+                heroTag: "btn2",
+                onPressed:getImageFromGallery,
+                child: Icon(Icons.album),
+              )
+            ],
+          ),
+        ),
+      body:
+              _image != null
+              ? ListView.builder(
+                  itemCount: _image.length,
+                  itemBuilder: (context, index) => Container(
+                      
+                      width: double.infinity,
+                      margin: EdgeInsets.all(8),
+                      child: Image.file(
+                        _image[index],
+                        fit: BoxFit.cover,
+                      )),
+                )
+              : Container(),
+             );
   }
 
-  Future<Null> getImageFromGallery() async {
+  Future<Null> getImageFromCamera() async {
     var pickedFile = await picker.getImage(source: ImageSource.camera);
+  File croppedFile = await ImageCropper.cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatioPresets: Platform.isAndroid
+            ? [
+                CropAspectRatioPreset.square,
+                CropAspectRatioPreset.ratio3x2,
+                CropAspectRatioPreset.original,
+                CropAspectRatioPreset.ratio4x3,
+                CropAspectRatioPreset.ratio16x9
+              ]
+            : [
+                CropAspectRatioPreset.original,
+                CropAspectRatioPreset.square,
+                CropAspectRatioPreset.ratio3x2,
+                CropAspectRatioPreset.ratio4x3,
+                CropAspectRatioPreset.ratio5x3,
+                CropAspectRatioPreset.ratio5x4,
+                CropAspectRatioPreset.ratio7x5,
+                CropAspectRatioPreset.ratio16x9
+              ],
+        androidUiSettings: AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.blue[400],
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        iosUiSettings: IOSUiSettings(
+          title: 'Cropper',
+        ));
+
+setState(() {
+  if (croppedFile != null) {
+    _image.add(File(croppedFile.path));
+  } else {
+    print('No image selected');
+  }
+});
+  }
+  Future<Null> getImageFromGallery() async {
+    var pickedFile = await picker.getImage(source: ImageSource.gallery);
   File croppedFile = await ImageCropper.cropImage(
         sourcePath: pickedFile.path,
         aspectRatioPresets: Platform.isAndroid
